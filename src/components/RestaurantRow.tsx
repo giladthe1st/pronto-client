@@ -1,5 +1,6 @@
 import { Restaurant } from '@/types/restaurants';
 import React from 'react';
+import Deal from './Deal';
 
 const RestaurantRow: React.FC<Restaurant> = ( restaurant ) => {
   return (
@@ -26,12 +27,7 @@ const RestaurantRow: React.FC<Restaurant> = ( restaurant ) => {
           <div>
             <Label>Deals</Label>
             <ul className="space-y-2 mt-1">
-              {restaurant.deals.map((deal, index) => (
-                <li key={index} className="flex items-center">
-                  <SparklesIcon className="w-4 h-4 mr-2" />
-                  <span>{deal}</span>
-                </li>
-              ))}
+              <Deal restaurantId={restaurant.id} />
             </ul>
           </div>
 
@@ -62,12 +58,7 @@ const RestaurantRow: React.FC<Restaurant> = ( restaurant ) => {
 
         <div>
           <ul className="space-y-2">
-            {restaurant.deals.map((deal, index) => (
-              <li key={index} className="flex items-center">
-                <SparklesIcon className="w-4 h-4 mr-2" />
-                <span>{deal}</span>
-              </li>
-            ))}
+            <Deal restaurantId={restaurant.id} />
           </ul>
         </div>
 

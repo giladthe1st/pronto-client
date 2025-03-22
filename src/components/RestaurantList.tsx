@@ -31,14 +31,6 @@ const RestaurantList: React.FC = () => {
     }
   }, [minRating, minReviews, restaurants]); // Add restaurants as a dependency
 
-  // Filter change handlers
-  const handleRatingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMinRating(Number(e.target.value));
-  };
-
-  const handleReviewCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMinReviews(Number(e.target.value));
-  };
 
   if (error) {
     return <div className="text-center py-8 text-red-500">Error: {error}</div>;
@@ -53,74 +45,63 @@ const RestaurantList: React.FC = () => {
         </span>
       </h1>
 
-      {/* Results count */}
-      <div className="mb-4 text-sm text-gray-600">
-        Showing {filteredRestaurants.length} of {restaurants.length} restaurants
-      </div>
-
-      {/* Filter controls - horizontal layout */}
-      <div className="bg-gray-50 p-4 rounded-lg mb-4 shadow-sm">
-        <div className="flex flex-wrap items-end gap-4">
-          {/* Rating filter */}
-          <div className="flex-1 min-w-[200px]">
-            <div className="flex justify-between items-center mb-1">
-              <label htmlFor="rating-filter" className="block text-sm font-medium text-gray-700">
-                Min Rating: <span className="text-blue-600">{minRating.toFixed(1)}★</span>
+      <div className="flex gap-8">
+        {/* Filter controls - moved to side */}
+        <div className="w-64 bg-gray-50 p-4 rounded-lg shadow-sm">
+          <div className="space-y-6">
+            {/* Rating filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Min Rating:
               </label>
+              <div className="flex space-x-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => setMinRating(star)}
+                    className={`p-2 rounded-full ${
+                      minRating >= star
+                        ? 'bg-yellow-400 text-white'
+                        : 'bg-gray-200 text-gray-500'
+                    } hover:bg-yellow-400 transition-colors`}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
             </div>
-            <input
-              id="rating-filter"
-              type="range"
-              min="0"
-              max={maxRating}
-              step="0.1"
-              value={minRating}
-              onChange={handleRatingChange}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-            />
-          </div>
-
-          {/* Review count filter */}
-          <div className="flex-1 min-w-[200px]">
-            <div className="flex justify-between items-center mb-1">
-              <label htmlFor="review-count-filter" className="block text-sm font-medium text-gray-700">
-                Min Reviews: <span className="text-blue-600">{minReviews}</span>
-              </label>
-            </div>
-            <input
-              id="review-count-filter"
-              type="range"
-              min="0"
-              max={maxReviewCount}
-              step="1"
-              value={minReviews}
-              onChange={handleReviewCountChange}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-            />
           </div>
         </div>
-      </div>
 
-      {/* Table header */}
-      <div className="hidden md:grid grid-cols-5 gap-6 p-4 border rounded mb-4 font-semibold">
-        <div>Restaurant</div>
-        <div>Deals</div>
-        <div>Menu</div>
-        <div>Reviews</div>
-        <div>Location</div>
-      </div>
-
-      {/* Restaurant rows */}
-      <div className="divide-y divide-gray-200">
-        {filteredRestaurants.length > 0 ? (
-          filteredRestaurants.map((restaurant) => (
-            <RestaurantRow key={restaurant.id} {...restaurant} />
-          ))
-        ) : (
-          <div className="py-8 text-center text-gray-500">
-            No restaurants match your filters. Try adjusting your criteria.
+        {/* Main content */}
+        <div className="flex-1">
+          {/* Results count */}
+          <div className="mb-4 text-sm text-gray-600">
+            Showing {filteredRestaurants.length} of {restaurants.length} restaurants
           </div>
-        )}
+
+          {/* Table header */}
+          <div className="hidden md:grid grid-cols-5 gap-6 p-4 border rounded mb-4 font-semibold">
+            <div>Restaurant</div>
+            <div>Deals</div>
+            <div>Menu</div>
+            <div>Reviews</div>
+            <div>Location</div>
+          </div>
+
+          {/* Restaurant rows */}
+          <div className="divide-y divide-gray-200">
+            {filteredRestaurants.length > 0 ? (
+              filteredRestaurants.map((restaurant) => (
+                <RestaurantRow key={restaurant.id} {...restaurant} />
+              ))
+            ) : (
+              <div className="py-8 text-center text-gray-500">
+                No restaurants match your filters. Try adjusting your criteria.
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

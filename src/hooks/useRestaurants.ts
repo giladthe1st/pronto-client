@@ -16,7 +16,6 @@ export function useRestaurants() {
         const transformedData = data.map((restaurant: Restaurant) => ({
           ...restaurant,
           // Add these if you want to keep them temporarily
-          deals: ["deal1", "deal2", "deal3"],        // Requires backend implementation
           menu: '',         // Requires backend implementation
           distance: 0       // Requires backend implementation
         }));

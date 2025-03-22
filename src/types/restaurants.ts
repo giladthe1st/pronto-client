@@ -8,7 +8,6 @@ export interface Restaurant {
   address: string;
   maps_url: string;
   // These fields need backend implementation or should be removed
-  deals: [];
   menu?: string;
   distance?: number;
 }
