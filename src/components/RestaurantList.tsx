@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import RestaurantRow from './RestaurantRow';
 import { useRestaurants } from '@/hooks/useRestaurants';
 import { Restaurant } from '@/types/restaurants';
@@ -8,15 +8,8 @@ import { Restaurant } from '@/types/restaurants';
 const RestaurantList: React.FC = () => {
   const { restaurants, error } = useRestaurants();
 
-  const maxReviewCount = useMemo(
-    () => Math.max(...restaurants.map((r) => r.reviews_count), 0),
-    [restaurants]
-  );
-  const maxRating = 5; // Rating is typically out of 5
-
   // Filter states
   const [minRating, setMinRating] = useState<number>(0);
-  const [minReviews, setMinReviews] = useState<number>(0);
   const [filteredRestaurants, setFilteredRestaurants] = useState<Restaurant[]>([]);
 
   // Update filteredRestaurants when restaurants or filters change
@@ -24,12 +17,11 @@ const RestaurantList: React.FC = () => {
     if (restaurants.length > 0) {
       const filtered = restaurants.filter((restaurant) => {
         const passesRatingFilter = restaurant.average_rating >= minRating;
-        const passesReviewCountFilter = restaurant.reviews_count >= minReviews;
-        return passesRatingFilter && passesReviewCountFilter;
+        return passesRatingFilter;
       });
       setFilteredRestaurants(filtered);
     }
-  }, [minRating, minReviews, restaurants]); // Add restaurants as a dependency
+  }, [minRating, restaurants]); // Add restaurants as a dependency
 
 
   if (error) {
