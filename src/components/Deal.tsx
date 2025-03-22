@@ -22,7 +22,7 @@ const Deal: React.FC<{ restaurantId: number }> = ({ restaurantId }) => {
   useEffect(() => {
     const fetchDeal = async () => {
       try {
-        const response = await fetch(`http://localhost:3001/api/deals/${restaurantId}`);
+        const response = await fetch(`https://pronto-server.vercel.app/api/deals/${restaurantId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch deal');
         }

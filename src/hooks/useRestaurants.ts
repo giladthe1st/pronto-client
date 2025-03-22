@@ -10,7 +10,7 @@ export function useRestaurants() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/restaurants');
+        const response = await fetch('https://pronto-server.vercel.app/api/restaurants');
         const data = await response.json();
 
         const transformedData = data.map((restaurant: Restaurant) => ({
