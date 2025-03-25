@@ -30,9 +30,15 @@ const RestaurantRow: React.FC<Restaurant> = ( restaurant ) => {
               <Deal restaurantId={restaurant.id} />
             </ul>
           </div>
-
           <div>
             <Label>Menu</Label>
+            <div className="mt-1 flex items-center">
+              <DocumentTextIcon className="w-4 h-4 mr-2" />
+              <a href="#" className="font-medium">View Menu</a>
+            </div>
+          </div>
+          <div>
+            <Label>Cuisine</Label>
             <div className="mt-1 flex items-center">
               <DocumentTextIcon className="w-4 h-4 mr-2" />
               <a href="#" className="font-medium">View Menu</a>
@@ -53,7 +59,7 @@ const RestaurantRow: React.FC<Restaurant> = ( restaurant ) => {
       </div>
 
       {/* Desktop view */}
-      <div className="hidden md:grid grid-cols-5 gap-6 p-4 items-center border rounded">
+      <div className="hidden md:grid grid-cols-6 gap-6 p-4 items-center border rounded">
         <div className="font-bold text-lg">{restaurant.name}</div>
 
         <div>
@@ -66,6 +72,12 @@ const RestaurantRow: React.FC<Restaurant> = ( restaurant ) => {
           <a href="#" className="inline-flex items-center font-medium">
             <DocumentTextIcon className="w-5 h-5 mr-2" />
             View Menu
+          </a>
+        </div>
+
+        <div>
+          <a href="#" className="inline-flex items-center font-medium">
+            {restaurant.categories.join(', ')}
           </a>
         </div>
 

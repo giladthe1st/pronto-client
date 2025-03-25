@@ -7,21 +7,33 @@ import { Restaurant } from '@/types/restaurants';
 
 const RestaurantList: React.FC = () => {
   const { restaurants, error } = useRestaurants();
-
-  // Filter states
-  const [minRating, setMinRating] = useState<number>(0);
+  const [minRating, setMinRating] = useState(0);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [filteredRestaurants, setFilteredRestaurants] = useState<Restaurant[]>([]);
 
-  // Update filteredRestaurants when restaurants or filters change
+  const allCategories = Array.from(
+    new Set(restaurants.flatMap(r => r.categories))
+  ).sort();
+
   useEffect(() => {
     if (restaurants.length > 0) {
-      const filtered = restaurants.filter((restaurant) => {
-        const passesRatingFilter = restaurant.average_rating >= minRating;
-        return passesRatingFilter;
+      const filtered = restaurants.filter(restaurant => {
+        const passesRating = restaurant.average_rating >= minRating;
+        const passesCategories = selectedCategories.length === 0 ||
+          restaurant.categories.some(cat => selectedCategories.includes(cat));
+        return passesRating && passesCategories;
       });
       setFilteredRestaurants(filtered);
     }
-  }, [minRating, restaurants]); // Add restaurants as a dependency
+  }, [minRating, selectedCategories, restaurants]);
+
+  // Add category filter UI
+  const toggleCategory = (category: string) => {
+    setSelectedCategories(prev => prev.includes(category)
+      ? prev.filter(c => c !== category)
+      : [...prev, category]
+    );
+  };
 
 
   if (error) {
@@ -63,6 +75,25 @@ const RestaurantList: React.FC = () => {
               </div>
             </div>
           </div>
+          {/* New category filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Categories:
+            </label>
+            <div className="space-y-2">
+              {allCategories.map(category => (
+                <label key={category} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.includes(category)}
+                    onChange={() => toggleCategory(category)}
+                    className="rounded text-yellow-500 focus:ring-yellow-500"
+                  />
+                  <span className="text-sm">{category}</span>
+                </label>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Main content */}
@@ -73,10 +104,11 @@ const RestaurantList: React.FC = () => {
           </div>
 
           {/* Table header */}
-          <div className="hidden md:grid grid-cols-5 gap-6 p-4 border rounded mb-4 font-semibold">
+          <div className="hidden md:grid grid-cols-6 gap-6 p-4 border rounded mb-4 font-semibold">
             <div>Restaurant</div>
             <div>Deals</div>
             <div>Menu</div>
+            <div>Cuisine</div>
             <div>Reviews</div>
             <div>Location</div>
           </div>

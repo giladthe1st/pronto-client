@@ -1,16 +1,3 @@
-// lets add a components for a deal, we will grab it from http://localhost:3001/api/deals based on the restaurant ID
-/*
-  {
-    "id": 4,
-    "created_at": "2025-03-09T16:52:39.116637+00:00",
-    "details": "Family Value #2\n2 Large 15\" 2 Topping Pizzas Plus Salad and Breadsticks\n$59.00",
-    "restaurant_id": 1,
-    "summarized_deal": "Family Value #2: 2 Small 15\" 2-Topping Pizzas + Salad & Breadsticks - $59",
-    "price": 59,
-    "restaurant_name": "Nicolinos"
-  }
-
-*/
 import { useEffect, useState } from 'react';
 import type { Deal } from '@/types/deals';
 

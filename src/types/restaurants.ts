@@ -7,6 +7,7 @@ export interface Restaurant {
   reviews_count: number;
   address: string;
   maps_url: string;
+  categories: string[];
   // These fields need backend implementation or should be removed
   menu?: string;
   distance?: number;
