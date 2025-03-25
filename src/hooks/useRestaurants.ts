@@ -10,19 +10,37 @@ export function useRestaurants() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://pronto-server.vercel.app/api/restaurants');
-        const data = await response.json();
+        // Fetch restaurants and categories in parallel
+        const [restaurantsRes, categoriesRes] = await Promise.all([
+          fetch('https://pronto-server.vercel.app/api/restaurants'),
+          fetch('https://pronto-server.vercel.app/api/restaurantCategories')
+        ]);
 
-        const transformedData = data.map((restaurant: Restaurant) => ({
+        const [restaurantsData, categoriesData] = await Promise.all([
+          restaurantsRes.json(),
+          categoriesRes.json()
+        ]);
+
+        // Create categories map
+        const categoriesMap: Map<number, string[]> = new Map();
+        categoriesData.forEach(({ restaurant_id, category_name }: { restaurant_id: number, category_name: string }) => {
+          categoriesMap.set(restaurant_id, [
+            ...(categoriesMap.get(restaurant_id) || []),
+            category_name
+          ]);
+        });
+
+        // Transform restaurant data
+        const transformedData = restaurantsData.map((restaurant: Restaurant) => ({
           ...restaurant,
-          // Add these if you want to keep them temporarily
-          menu: '',         // Requires backend implementation
-          distance: 0       // Requires backend implementation
+          categories: categoriesMap.get(restaurant.id) || [],
+          menu: '',
+          distance: 0
         }));
 
         setRestaurants(transformedData);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch restaurants');
+        setError(err instanceof Error ? err.message : 'Failed to fetch data');
       }
     };
 
