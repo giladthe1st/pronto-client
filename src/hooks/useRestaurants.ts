@@ -22,8 +22,8 @@ export function useRestaurants() {
         ]);
 
         // Create categories map
-        const categoriesMap = new Map<number, string[]>();
-        categoriesData.forEach(({ restaurant_id, category_name }: any) => {
+        const categoriesMap: Map<number, string[]> = new Map();
+        categoriesData.forEach(({ restaurant_id, category_name }: { restaurant_id: number, category_name: string }) => {
           categoriesMap.set(restaurant_id, [
             ...(categoriesMap.get(restaurant_id) || []),
             category_name
