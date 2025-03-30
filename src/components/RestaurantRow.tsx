@@ -1,6 +1,11 @@
 import { Restaurant } from '@/types/restaurants';
-import React from 'react';
-import Deal from './Deal';
+import React, { useState as useStateReact } from 'react';
+import DealsList from './DealsList';
+import {
+  StarIcon,
+  DocumentTextIcon,
+  MapPinIcon,
+} from '@heroicons/react/24/outline';
 
 const RestaurantRow: React.FC<Restaurant> = ( restaurant ) => {
   return (
@@ -24,11 +29,9 @@ const RestaurantRow: React.FC<Restaurant> = ( restaurant ) => {
         </div>
 
         <div className="space-y-4">
-          <div>
             <Label>Deals</Label>
-            <ul className="space-y-2 mt-1">
-              <Deal restaurantId={restaurant.id} />
-            </ul>
+            <div className="mt-1">
+            <DealsList restaurantId={restaurant.id} />
           </div>
           <div>
             <Label>Menu</Label>
@@ -63,9 +66,7 @@ const RestaurantRow: React.FC<Restaurant> = ( restaurant ) => {
         <div className="font-bold text-lg">{restaurant.name}</div>
 
         <div>
-          <ul className="space-y-2">
-            <Deal restaurantId={restaurant.id} />
-          </ul>
+          <DealsList restaurantId={restaurant.id} />
         </div>
 
         <div>
@@ -114,24 +115,9 @@ const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </span>
 );
 
-// Icons (You should import these from your actual icon library)
-const StarIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-  </svg>
-);
-
-const DocumentTextIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-  </svg>
-);
-
-const MapPinIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-  </svg>
-);
+// export default RestaurantRow;
+// function useState(arg0: boolean): [any, any] {
+//   throw new Error('Function not implemented.');
+// }
 
 export default RestaurantRow;
