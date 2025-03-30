@@ -12,8 +12,12 @@ export function useRestaurants() {
       try {
         // Fetch restaurants and categories in parallel
         const [restaurantsRes, categoriesRes] = await Promise.all([
-          fetch('https://pronto-server.vercel.app/api/restaurants'),
-          fetch('https://pronto-server.vercel.app/api/restaurantCategories')
+          fetch('http://localhost:3001/api/restaurants').catch(() =>
+            fetch('https://pronto-server.vercel.app/api/restaurants')
+          ),
+          fetch('http://localhost:3001/api/restaurantCategories').catch(() =>
+            fetch('https://pronto-server.vercel.app/api/restaurantCategories')
+          ),
         ]);
 
         const [restaurantsData, categoriesData] = await Promise.all([
