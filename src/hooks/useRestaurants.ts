@@ -39,7 +39,7 @@ export function useRestaurants() {
         });
 
         // Map API data to Restaurant type (WITHOUT distance initially)
-        const transformedData = restaurantsData.map((r: any) => ({ // Use 'any' carefully or define an API specific type
+        const transformedData = restaurantsData.map((r: Restaurant ) => ({ // Use 'any' carefully or define an API specific type
           id: r.id,
           name: r.name,
           logo_url: r.logo_url,
@@ -51,8 +51,6 @@ export function useRestaurants() {
           latitude: r.latitude,
           longitude: r.longitude,
           categories: categoriesMap.get(r.id) || [],
-          // menu: '', // Only include if needed, API doesn't provide it
-          // distance is intentionally omitted here, will be calculated later
         }));
 
         setRestaurants(transformedData);
