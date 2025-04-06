@@ -1,8 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+// hooks/useRestaurantFilters.ts
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Restaurant } from '@/types/restaurants';
 import { useDealPrices } from './useDealPrices';
+import { useUserLocation } from './useUserLocation'; // <-- Import location hook
+import { calculateDistance } from '@/utils/geo'; // <-- Import distance calculator
 
-export const useRestaurantFilters = (restaurants: Restaurant[]) => {
+export const useRestaurantFilters = (initialRestaurants: Restaurant[]) => {
   const [filters, setFilters] = useState({
     minRating: 0,
     selectedCategories: [] as string[],
@@ -13,16 +16,58 @@ export const useRestaurantFilters = (restaurants: Restaurant[]) => {
   const [showFilters, setShowFilters] = useState(false);
   const [showSort, setShowSort] = useState(false);
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
+  const [processedRestaurants, setProcessedRestaurants] = useState<Restaurant[]>([]); // Restaurants with distance calculated
   const [filteredRestaurants, setFilteredRestaurants] = useState<Restaurant[]>([]);
 
-  const { dealPrices } = useDealPrices(restaurants, filters.sortBy);
+  const { dealPrices } = useDealPrices(initialRestaurants, filters.sortBy);
+  const { location: userLocation, error: locationError, loading: locationLoading } = useUserLocation(); // <-- Use location hook
 
-  const allCategories = Array.from(
-    new Set(restaurants.flatMap(r => r.categories))
-  ).sort();
+  // Calculate all unique categories once
+  const allCategories = useMemo(() =>
+    Array.from(new Set(initialRestaurants.flatMap(r => r.categories))).sort()
+  , [initialRestaurants]);
+
+  // Effect to calculate distances when initialRestaurants or userLocation changes
+  useEffect(() => {
+    if (initialRestaurants.length > 0 && !locationLoading) { // Process when location is determined (or failed)
+      const restaurantsWithDistances = initialRestaurants.map(restaurant => {
+        let distance: number | undefined = undefined;
+        if (userLocation && restaurant.latitude && restaurant.longitude) {
+          try {
+            distance = calculateDistance(
+              userLocation.latitude,
+              userLocation.longitude,
+              restaurant.latitude,
+              restaurant.longitude
+            );
+          } catch (e) {
+            console.error("Error calculating distance for restaurant", restaurant.id, e);
+          }
+        }
+        return {
+          ...restaurant,
+          distance: distance // distance will be undefined if no userLocation or error
+        };
+      });
+      setProcessedRestaurants(restaurantsWithDistances);
+    } else {
+       // Set initial state or handle loading case if needed
+       setProcessedRestaurants(initialRestaurants.map(r => ({ ...r, distance: undefined })));
+    }
+  }, [initialRestaurants, userLocation, locationLoading]); // Depend on loading state too
+
+  // Log location errors
+  useEffect(() => {
+      if (locationError) {
+          console.warn("Could not get user location:", locationError);
+          // Optionally, show a message to the user
+      }
+  }, [locationError]);
+
 
   const applyFiltersAndSort = useCallback(() => {
-    let filtered = restaurants.filter(restaurant => {
+    // Start filtering from the list that potentially has distances
+    let filtered = processedRestaurants.filter(restaurant => {
       const passesRating = restaurant.average_rating >= filters.minRating;
       const passesCategories = filters.selectedCategories.length === 0 ||
         restaurant.categories.some(cat => filters.selectedCategories.includes(cat));
@@ -35,47 +80,57 @@ export const useRestaurantFilters = (restaurants: Restaurant[]) => {
       return passesRating && passesCategories && passesSearch;
     });
 
+    // Apply sorting
     if (filters.sortBy === 'price') {
       filtered = filtered.sort((a, b) => {
-        const priceA = dealPrices[a.id] || Infinity;
-        const priceB = dealPrices[b.id] || Infinity;
+        const priceA = dealPrices[a.id] ?? Infinity; // Use ?? for nullish coalescing
+        const priceB = dealPrices[b.id] ?? Infinity;
         return priceA - priceB;
       });
     } else if (filters.sortBy === 'rating') {
       filtered = filtered.sort((a, b) => b.average_rating - a.average_rating);
     } else if (filters.sortBy === 'distance') {
+       // Sort by distance, putting restaurants without a calculated distance last
       filtered = filtered.sort((a, b) => {
-        const distanceA = a.distance || Infinity;
-        const distanceB = b.distance || Infinity;
-        return distanceA - distanceB;
+        const distA = a.distance ?? Infinity; // Treat undefined/null distance as Infinity
+        const distB = b.distance ?? Infinity;
+        // Handle cases where both are Infinity (e.g., no location permission) - keep original relative order
+        if (distA === Infinity && distB === Infinity) {
+          return 0;
+        }
+        return distA - distB;
       });
     }
+    // Add default sort if needed (e.g., by ID or name) to ensure stability if 'default' is selected
+    // else if (filters.sortBy === 'default') { ... }
 
     setFilteredRestaurants(filtered);
-  }, [restaurants, filters, dealPrices]);
+  }, [processedRestaurants, filters, dealPrices]); // Depend on processedRestaurants now
 
   useEffect(() => {
+    // Re-apply filters and sort whenever dependencies change
     applyFiltersAndSort();
-  }, [applyFiltersAndSort]);
+  }, [applyFiltersAndSort]); // applyFiltersAndSort includes all its dependencies
+
+  // --- Rest of the hook remains largely the same ---
 
   const handleSearch = (query: string) => {
     setFilters(prev => ({ ...prev, searchQuery: query }));
   };
 
   const toggleFilters = () => {
-    setShowFilters(prev => !prev); // Toggle behavior
-    if (!showFilters) setShowSort(false); // Close sort if opening filters
+    setShowFilters(prev => !prev);
+    if (!showFilters) setShowSort(false);
   };
 
   const toggleSort = () => {
-    setShowSort(prev => !prev); // Toggle behavior
-    if (!showSort) setShowFilters(false); // Close filters if opening sort
+    setShowSort(prev => !prev);
+    if (!showSort) setShowFilters(false);
   };
 
-    // Add this function to explicitly close the sort dropdown
-    const closeSort = () => {
-      setShowSort(false);
-    };
+  const closeSort = () => {
+    setShowSort(false);
+  };
 
   const setMinRating = (rating: number) => {
     setFilters(prev => ({ ...prev, minRating: rating }));
@@ -91,6 +146,12 @@ export const useRestaurantFilters = (restaurants: Restaurant[]) => {
   };
 
   const setSortBy = (sortBy: 'default' | 'price' | 'rating' | 'distance') => {
+     // Optional: Maybe prevent selecting 'distance' if location failed?
+     // if (sortBy === 'distance' && locationError) {
+     //    console.warn("Cannot sort by distance: Location unavailable.");
+     //    // Optionally show a user message here
+     //    return;
+     // }
     setFilters(prev => ({ ...prev, sortBy }));
   };
 
@@ -113,7 +174,7 @@ export const useRestaurantFilters = (restaurants: Restaurant[]) => {
 
   return {
     filteredRestaurants,
-    filters: { ...filters, allCategories },
+    filters: { ...filters, allCategories }, // Pass calculated categories
     showFilters,
     showSort,
     selectedRestaurant,
@@ -126,6 +187,8 @@ export const useRestaurantFilters = (restaurants: Restaurant[]) => {
     clearFilters,
     handleRestaurantClick,
     closeDealsModal,
-    closeSort
+    closeSort,
+    locationError, // Expose location error if needed by UI
+    locationLoading, // Expose loading state
   };
 };
