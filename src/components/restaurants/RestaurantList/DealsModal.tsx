@@ -1,51 +1,64 @@
-import React from 'react'; // <-- Import React if not already
+// src/components/restaurants/RestaurantList/DealsModal.tsx
+import React from 'react';
 import { Restaurant } from '@/types/restaurants';
+import { useDeals } from '@/hooks/useDeals'; // Import the new hook
 import DealsList from './DealsList';
-import { FireIcon } from '@heroicons/react/24/outline';
+import { FireIcon, XMarkIcon } from '@heroicons/react/24/solid'; // Use solid XMark
 
 interface DealsModalProps {
-  restaurant: Restaurant;
+  restaurant: Restaurant | null; // Can be null if no restaurant selected
   onClose: () => void;
 }
 
 const DealsModal: React.FC<DealsModalProps> = ({ restaurant, onClose }) => {
+  // Use the hook to fetch deals for the selected restaurant's ID
+  const { deals, loading, error } = useDeals(restaurant?.id ?? null); // Pass ID or null
 
-  // Function to handle clicks on the overlay
+  // Handle clicks on the overlay to close the modal
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // If the click target is the overlay element itself (not a child like the modal content)
     if (e.target === e.currentTarget) {
-      onClose(); // Call the onClose function passed via props
+      onClose();
     }
   };
 
+  // Don't render the modal if no restaurant is selected
+  if (!restaurant) {
+    return null;
+  }
+
   return (
-    // Add onClick to the main overlay div
     <div
-      className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4"
-      onClick={handleOverlayClick} // <-- Add the click handler here
+      className="fixed inset-0 z-50 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300 ease-in-out"
+      onClick={handleOverlayClick}
+      aria-labelledby="deals-modal-title"
+      role="dialog"
+      aria-modal="true"
     >
-      {/* This is the actual modal content. Clicks inside here won't trigger the overlay click handler */}
-      <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="bg-gradient-to-r from-purple-600 to-purple-800 p-6 text-white">
+      {/* Modal Content */}
+      <div className="bg-gray-50 rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+        {/* Modal Header */}
+        <div className="bg-gradient-to-r from-purple-600 to-purple-800 p-5 md:p-6 text-white flex-shrink-0">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <FireIcon className="w-8 h-8" />
+              <FireIcon className="w-7 h-7 md:w-8 md:h-8 flex-shrink-0" />
               <div>
-                <h2 className="text-2xl font-bold">{restaurant.name}</h2>
-                <p className="text-purple-200">Current Deals & Specials</p>
+                <h2 id="deals-modal-title" className="text-xl md:text-2xl font-bold">{restaurant.name}</h2>
+                <p className="text-sm md:text-base text-purple-200">Current Deals & Specials</p>
               </div>
             </div>
             <button
-              onClick={onClose} // Keep this button for explicit closing
-              className="text-white hover:text-purple-200 p-2 rounded-full hover:bg-purple-700 transition-colors"
+              onClick={onClose}
+              className="text-purple-200 hover:text-white p-2 rounded-full hover:bg-white/20 transition-colors focus:outline-none focus:ring-2 focus:ring-white"
+              aria-label="Close deals modal"
             >
-              ✕
+              <XMarkIcon className="w-6 h-6" />
             </button>
           </div>
         </div>
 
-        <div className="p-6">
-          <DealsList restaurantId={restaurant.id} />
+        {/* Modal Body (Scrollable) */}
+        <div className="p-5 md:p-6 overflow-y-auto">
+          <DealsList deals={deals} loading={loading} error={error} />
         </div>
       </div>
     </div>

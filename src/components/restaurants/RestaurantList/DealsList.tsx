@@ -1,113 +1,92 @@
-import React, { useEffect, useState } from 'react';
-import { ClockIcon } from '@heroicons/react/24/solid';
-
-export interface DealData {
-  id: number;
-  created_at: string;
-  details: string;
-  restaurant_id: number;
-  summarized_deal: string;
-  price: number;
-  restaurant_name: string;
-}
+// src/components/restaurants/RestaurantList/DealsList.tsx
+import React from 'react';
+import { DealData } from '@/types/deals'; // Use centralized type
 
 interface DealsListProps {
-  restaurantId: number;
+  deals: DealData[];
+  loading: boolean;
+  error: string | null;
 }
 
-const DealsList: React.FC<DealsListProps> = ({ restaurantId }) => {
-  const [deals, setDeals] = useState<DealData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+const DealsList: React.FC<DealsListProps> = ({ deals, loading, error }) => {
 
-  useEffect(() => {
-    const fetchDeals = async () => {
-      try {
-        const response = await fetch(
-          `http://localhost:3001/api/restaurants/${restaurantId}/deals`
-        ).catch(() =>
-          fetch(`https://pronto-server.vercel.app/api/restaurants/${restaurantId}/deals`)
-        );
+  if (loading) {
+    // Improved Loading Skeleton
+    return (
+      <div className="space-y-4 p-1">
+        {[...Array(2)].map((_, i) => ( // Skeleton for 2 deals
+          <div key={i} className="border border-gray-100 rounded-xl p-5 bg-gray-50 animate-pulse">
+            <div className="flex justify-between items-start gap-4">
+              <div className="flex-1 space-y-3">
+                 <div className="flex items-center gap-2">
+                     <div className="h-4 bg-gray-200 rounded w-16"></div>
+                     <div className="h-4 bg-gray-200 rounded w-20"></div>
+                 </div>
+                <div className="h-5 bg-gray-300 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-full"></div>
+                 <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+              </div>
+              <div className="text-right min-w-[100px] space-y-2">
+                <div className="h-7 bg-gray-300 rounded w-20 ml-auto"></div>
+                <div className="h-3 bg-gray-200 rounded w-16 ml-auto"></div>
+                 <div className="h-9 bg-gray-300 rounded w-full mt-3"></div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
-        if (!response.ok) throw new Error('Failed to fetch deals');
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 rounded-lg text-red-600 border border-red-200">
+        ⚠️ Error loading deals: {error}
+      </div>
+    );
+  }
 
-        const data: DealData[] = await response.json();
-        setDeals(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
+  if (deals.length === 0) {
+    return (
+      <div className="p-4 bg-gray-50 rounded-lg text-gray-500 text-center border border-gray-200">
+        No current deals available for this restaurant.
+      </div>
+    );
+  }
 
-    fetchDeals();
-  }, [restaurantId]);
-
-  const calculateSavings = (deal: DealData) => {
-    const basePrice = deal.price * 1.3;
-    return Math.round(((basePrice - deal.price) / basePrice) * 100);
-  };
-
-  if (loading) return (
-    <div className="p-4 bg-gray-50 rounded-lg animate-pulse">
-      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-    </div>
-  );
-
-  if (error) return (
-    <div className="p-4 bg-red-50 rounded-lg text-red-500">
-      ⚠️ Error loading deals
-    </div>
-  );
-
-  if (deals.length === 0) return (
-    <div className="p-4 bg-gray-50 rounded-lg text-gray-500">
-      No current deals available
-    </div>
-  );
-
+  // Sort deals by price within this list (this is purely presentation logic now)
   const sortedDeals = [...deals].sort((a, b) => a.price - b.price);
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-bold text-gray-700">
-          {sortedDeals.length} {sortedDeals.length > 1 ? 'Available Deals' : 'Available Deal'}
-        </h3>
-        <div className="flex items-center text-sm text-gray-500">
-          <ClockIcon className="w-4 h-4 mr-1" />
-          <span>Updated today</span>
+      {/* Header Section */}
+      <div className="flex items-center justify-between mb-4 text-sm">
+        <div className="font-semibold text-gray-700">
+          {sortedDeals.length} {sortedDeals.length !== 1 ? 'Available Deals' : 'Available Deal'}
         </div>
       </div>
 
+      {/* Deals Grid/List */}
       {sortedDeals.map((deal) => (
         <div
           key={deal.id}
-          className="border border-gray-100 rounded-xl p-5 hover:shadow-md transition-shadow bg-gradient-to-br from-white to-gray-50"
+          className="border border-gray-200 rounded-xl p-4 md:p-5 transition-shadow duration-200 ease-in-out hover:shadow-md bg-white" // Subtle background change
         >
-          <div className="flex justify-between items-start gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+            {/* Deal Details */}
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="bg-purple-100 text-purple-800 text-xs font-bold px-2 py-1 rounded">
-                  SAVE {calculateSavings(deal)}%
-                </span>
-                <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">
-                  POPULAR
-                </span>
-              </div>
-              <h3 className="font-bold text-lg text-gray-800 mb-2">{deal.summarized_deal}</h3>
+              <h3 className="font-semibold text-base md:text-lg text-gray-800 mb-1.5">{deal.summarized_deal}</h3>
               <p className="text-gray-600 text-sm whitespace-pre-line">
                 {deal.details}
               </p>
             </div>
-            <div className="text-right min-w-[100px]">
-              <div className="text-2xl font-bold text-green-600">
+
+            {/* Price & Action */}
+            <div className="text-right w-full sm:w-auto sm:min-w-[110px] flex-shrink-0 mt-3 sm:mt-0">
+              <div className="text-xl md:text-2xl font-bold text-green-600">
                 ${deal.price.toFixed(2)}
               </div>
-              <div className="text-xs text-gray-500 line-through">
-                ${(deal.price * 1.3).toFixed(2)}
-              </div>
-              <button className="mt-3 w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors">
+              <button className="mt-3 w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
                 Get Deal
               </button>
             </div>
