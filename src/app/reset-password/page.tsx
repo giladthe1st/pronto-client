@@ -1,19 +1,15 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { getSupabase } from "@/lib/supabaseClient";
 
 const ResetPasswordPage = () => {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  // Check if this is a recovery (password reset) flow
-  const isRecovery = typeof window !== 'undefined' && window.location.hash.includes("type=recovery");
 
   useEffect(() => {
     // Optionally, redirect if not a recovery flow

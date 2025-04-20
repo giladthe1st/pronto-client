@@ -18,7 +18,6 @@ const EditRestaurantPage = ({ id }: { id: string }) => {
   });
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
-  const [newCategory, setNewCategory] = useState('');
   const [categorySearch, setCategorySearch] = useState('');
 
   useEffect(() => {
@@ -38,8 +37,9 @@ const EditRestaurantPage = ({ id }: { id: string }) => {
           average_rating: data.average_rating?.toString() || '',
           categories: Array.isArray(data.categories) ? data.categories : [],
         });
-      } catch (err: any) {
-        toast.error(err.message || 'Failed to fetch restaurant');
+      } catch (err: unknown) {
+        const msg = (typeof err === 'object' && err && 'message' in err) ? String((err as { message?: unknown }).message) : 'Failed to fetch restaurant';
+        toast.error(msg);
       } finally {
         setFetching(false);
       }
@@ -76,8 +76,9 @@ const EditRestaurantPage = ({ id }: { id: string }) => {
       }
       toast.success('Restaurant updated successfully!');
       router.push('/admin/restaurants');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update restaurant');
+    } catch (err: unknown) {
+      const msg = (typeof err === 'object' && err && 'message' in err) ? String((err as { message?: unknown }).message) : 'Failed to update restaurant';
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,4 @@
 import React from 'react';
-import AdminLayout from './AdminLayout';
-
 
 const DealsAdminPage = () => {
   // TODO: Implement CRUD logic for deals using /api/admin/deals endpoints

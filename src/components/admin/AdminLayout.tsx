@@ -5,7 +5,7 @@ import ReactQueryProvider from '@/components/providers/ReactQueryProvider';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { ArrowLeftOnRectangleIcon, BuildingStorefrontIcon, TagIcon, DocumentArrowUpIcon, HomeIcon, GlobeAltIcon } from '@heroicons/react/24/outline'; // Example icons
+import { ArrowLeftOnRectangleIcon, BuildingStorefrontIcon, TagIcon, DocumentArrowUpIcon, GlobeAltIcon } from '@heroicons/react/24/outline'; // Example icons
 
 interface AdminLayoutProps {
   children: ReactNode;

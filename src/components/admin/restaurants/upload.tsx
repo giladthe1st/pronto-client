@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import AdminProtectedRoute from '@/components/auth/AdminProtectedRoute';
 import { fetchAdminAPI } from '@/utils/adminApi';
 import { ArrowUpTrayIcon } from '@heroicons/react/24/outline';
+import AdminLayout from '../AdminLayout';
 
 interface UploadResult {
   message: string;

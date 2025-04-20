@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { fetchAdminAPI } from '@/utils/adminApi';
+import { RestaurantCategoryList } from '@/types/restaurantCategories';
 
 const NewRestaurantPage = () => {
   const router = useRouter();
@@ -10,9 +11,10 @@ const NewRestaurantPage = () => {
     name: '',
     address: '',
     average_rating: '',
-    categories: '', // Comma separated
+    categories: [] as string[],
   });
   const [loading, setLoading] = useState(false);
+  const [categorySearch, setCategorySearch] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -25,7 +27,7 @@ const NewRestaurantPage = () => {
       const payload = {
         ...form,
         average_rating: form.average_rating ? parseFloat(form.average_rating) : undefined,
-        categories: form.categories.split(',').map((c) => c.trim()).filter(Boolean),
+        categories: form.categories,
       };
       const response = await fetchAdminAPI('/restaurants', {
         method: 'POST',
@@ -38,8 +40,9 @@ const NewRestaurantPage = () => {
       }
       toast.success('Restaurant created successfully!');
       router.push('/admin/restaurants');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to create restaurant');
+    } catch (err: unknown) {
+      const msg = (typeof err === 'object' && err && 'message' in err) ? String((err as { message?: unknown }).message) : 'Failed to fetch restaurant';
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -87,15 +90,44 @@ const NewRestaurantPage = () => {
             </div>
             <div>
               <label className="block mb-1 font-medium">Categories</label>
+              {form.categories.length > 0 && (
+                <div className="mb-2">
+                  <span className="font-medium">Current Categories: </span>
+                  {form.categories.map(cat => (
+                    <span key={cat} className="inline-block bg-gray-200 rounded px-2 py-1 text-sm mr-2">{cat}</span>
+                  ))}
+                </div>
+              )}
               <input
                 type="text"
-                name="categories"
-                value={form.categories}
-                onChange={handleChange}
-                className="w-full border rounded px-3 py-2"
-                placeholder="e.g. Italian, Pizza, Vegan"
+                value={categorySearch}
+                onChange={e => setCategorySearch(e.target.value)}
+                placeholder="Search categories"
+                className="border rounded px-2 py-1 mb-2 w-full"
               />
-              <p className="text-xs text-gray-400 mt-1">Separate categories with commas.</p>
+              <ul className="divide-y divide-gray-200">
+                {RestaurantCategoryList.filter((cat: string) => cat.toLowerCase().includes(categorySearch.toLowerCase())).map((cat: string) => (
+                  <li key={cat} className="flex items-center justify-between py-1">
+                    <span>{cat}</span>
+                    {form.categories.includes(cat) ? (
+                      <span className="flex items-center">
+                        <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs mr-2">Assigned</span>
+                        <button
+                          type="button"
+                          className="text-red-500 hover:underline text-xs"
+                          onClick={() => setForm({ ...form, categories: form.categories.filter((c: string) => c !== cat) })}
+                        >Delete</button>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="text-blue-500 hover:underline text-xs"
+                        onClick={() => setForm({ ...form, categories: [...form.categories, cat] })}
+                      >Add</button>
+                    )}
+                  </li>
+                ))}
+              </ul>
             </div>
             <div className="flex justify-end space-x-2">
               <button
