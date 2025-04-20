@@ -20,13 +20,13 @@ interface AuthProviderProps {
 
 // Define a type for your user profile data from the backend/database
 interface UserProfile {
-    id: number; // Your app's user ID
-    email: string;
-    role: {
-        id: number;
-        role_type: string; // e.g., 'Admin', 'User'
-    };
-    // Add other profile fields if needed
+    profile: {
+        appUserId: string;
+        email: string;
+        roleId: string;
+        roleType: string; // e.g., 'Admin', 'User'
+        // Add other profile fields if needed
+    }
 }
 
 
@@ -38,7 +38,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState<boolean>(true); // Start loading until checked
 
    // Fetch extended user profile including role AFTER Supabase auth confirms user
-   const fetchUserProfile = async (authUser: User | null): Promise<UserProfile | null> => {
+   const fetchUserProfile = React.useCallback(async (authUser: User | null): Promise<UserProfile | null> => {
         console.log('[AuthContext] fetchUserProfile called with:', authUser?.email);
 
         if (!authUser) return null;
@@ -48,29 +48,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // *Alternatively*, you could call the `getUserAppRole` logic directly from the frontend,
         // but it's generally better practice to have a dedicated backend endpoint.
 
-        // Placeholder: You need to implement this backend endpoint
-        // It should verify the JWT and return the user's data from your `Users` table.
-        console.warn("AuthContext: fetchUserProfile needs a backend endpoint like GET /api/users/me");
-        // try {
-        //    const response = await fetchWithAuth('/users/me'); // Your function to call protected API
-        //    if (!response.ok) throw new Error('Failed to fetch profile');
-        //    const profile: UserProfile = await response.json();
-        //    return profile;
-        // } catch (error) {
-        //    console.error("Failed to fetch user profile:", error);
-        //    return null;
-        // }
-        // --- Temporary Mock ---
-        // Simulating fetching role based on email for demo - replace with real API call!
-        if (authUser.email === 'gilad.rodov@gmail.com') {
-            console.log('[AuthContext] Mocking admin user:', authUser.email);
-            return { id: 1, email: authUser.email, role: { id: 2, role_type: 'Admin' } };
-        } else {
-            console.log('[AuthContext] Mocking regular user:', authUser.email);
-            return { id: 10, email: authUser.email || '', role: { id: 1, role_type: 'User' } };
+        // Call the backend endpoint to get the current user's profile and role
+        try {
+            // Get the current session to retrieve the access token
+            const { data: { session } } = await supabase.auth.getSession();
+            const accessToken = session?.access_token;
+            if (!accessToken) throw new Error('No access token found');
+
+            // Determine the correct API base URL
+            const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ||
+                (process.env.NODE_ENV === 'development'
+                    ? 'http://localhost:3001'
+                    : 'https://pronto-client.vercel.app');
+
+            // Call your backend endpoint with the token
+            const response = await fetch(`${API_BASE_URL}/api/users/me`, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                },
+                credentials: 'include', // if your backend uses cookies
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch profile');
+            const profile: UserProfile = await response.json();
+            console.log("[AuthContext] Profile fetched from /api/users/me:", profile);
+            return profile;
+        } catch (error) {
+            console.error("Failed to fetch user profile:", error);
+            return null;
         }
-        // --- End Temporary Mock ---
-   };
+   }, [supabase]);
 
 
   useEffect(() => {
@@ -82,12 +89,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('[AuthContext] Initial session:', session?.user?.email);
 
        // 2. Fetch profile and determine admin status based on initial session
-       fetchUserProfile(session?.user ?? null).then(profile => {
-            const isAdmin = profile?.role?.role_type === 'Admin';
+       fetchUserProfile(session?.user ?? null)
+         .then(profile => {
+            const isAdmin = profile?.profile?.roleType === 'Admin';
             setIsAdmin(isAdmin);
-            setLoading(false); // Initial check complete
             console.log('[AuthContext] Profile:', profile, 'isAdmin:', isAdmin);
-       });
+         })
+         .catch(error => {
+            console.error('Error fetching profile:', error);
+         })
+         .finally(() => {
+            setLoading(false); // Always set loading to false
+         });
     });
 
     // 3. Listen for auth state changes (login, logout)
@@ -100,9 +113,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Re-fetch profile and update admin status on change
         setLoading(true); // Indicate loading while checking role
-        const profile = await fetchUserProfile(currentUser);
-        setIsAdmin(profile?.role?.role_type === 'Admin');
-        setLoading(false);
+        fetchUserProfile(currentUser)
+          .then(profile => {
+            setIsAdmin(profile?.profile?.roleType === 'Admin');
+            console.log('[AuthContext] After Auth Change\nProfile: ' + JSON.stringify(profile) + '\nisAdmin: ' + (profile?.profile?.roleType === 'Admin'));
+          })
+          .catch(error => {
+            console.error('Error fetching profile after auth change:', error);
+          })
+          .finally(() => {
+            setLoading(false);
+          });
       }
     );
 
@@ -110,7 +131,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => {
       authListener?.subscription?.unsubscribe();
     };
-  }, [supabase]); // Add supabase as dependency
+  }, [supabase, fetchUserProfile]); // Add supabase and fetchUserProfile as dependencies
 
   const logout = async () => {
     await supabase.auth.signOut();
