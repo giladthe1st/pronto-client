@@ -56,10 +56,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             if (!accessToken) throw new Error('No access token found');
 
             // Determine the correct API base URL
-            const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ||
-                (process.env.NODE_ENV === 'development'
-                    ? 'http://localhost:3001'
-                    : 'https://pronto-client.vercel.app');
+            const API_BASE_URL = 'https://pronto-server.vercel.app'
 
             // Call your backend endpoint with the token
             const response = await fetch(`${API_BASE_URL}/api/users/me`, {
